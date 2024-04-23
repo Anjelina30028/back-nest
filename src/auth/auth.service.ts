@@ -10,6 +10,7 @@ import { AuthDto } from './dto/auth.dto'
 import { hash, genSalt, compare } from 'bcryptjs'
 import passport from 'passport'
 import { JwtService } from '@nestjs/jwt'
+import { refreshTokenDto } from './dto/refreshToken'
 
 @Injectable()
 export class AuthService {
@@ -27,6 +28,24 @@ export class AuthService {
 			...tokens,
 		}
 	}
+
+	async getNewTokens({refreshToken}: refreshTokenDto) {
+		if(!refreshToken) throw new UnauthorizedException('Вам нужно авторизоваться')
+		
+			const result = await this.jwtService.verifyAsync(refreshToken)
+			if(!result) throw new UnauthorizedException('Не действительный токен')
+
+			const user = await this.UserModel.findById(result._id)
+			
+			const tokens = await  this.issueTokenPair(String(user._id))
+			return {
+				user: this.returnUserFields(user),
+				...tokens
+			}
+			
+
+	}
+
 
 	async register(dto: AuthDto) {
 		const oldUser = await this.UserModel.findOne({ email: dto.email })
