@@ -11,6 +11,7 @@ import { hash, genSalt, compare } from 'bcryptjs'
 import passport from 'passport'
 import { JwtService } from '@nestjs/jwt'
 import { refreshTokenDto } from './dto/refreshToken'
+import { UpdateUserDto } from 'src/user/dto/update-user.dto'
 
 @Injectable()
 export class AuthService {
@@ -29,42 +30,42 @@ export class AuthService {
 		}
 	}
 
-	async getNewTokens({refreshToken}: refreshTokenDto) {
-		if(!refreshToken) throw new UnauthorizedException('Вам нужно авторизоваться')
-		
-			const result = await this.jwtService.verifyAsync(refreshToken)
-			if(!result) throw new UnauthorizedException('Не действительный токен')
+	async getNewTokens({ refreshToken }: refreshTokenDto) {
+		if (!refreshToken)
+			throw new UnauthorizedException('Вам нужно авторизоваться')
 
-			const user = await this.UserModel.findById(result._id)
-			
-			const tokens = await  this.issueTokenPair(String(user._id))
-			return {
-				user: this.returnUserFields(user),
-				...tokens
-			}
-			
+		const result = await this.jwtService.verifyAsync(refreshToken)
+		if (!result) throw new UnauthorizedException('Не действительный токен')
 
-	}
+		const user = await this.UserModel.findById(result._id)
 
-
-	async register(dto: AuthDto) {
-		const oldUser = await this.UserModel.findOne({ email: dto.email })
-		if (oldUser)
-			throw new BadRequestException('Пользователь с таким email уже существует')
-
-		const salt = await genSalt(10)
-
-		const newUser = new this.UserModel({
-			email: dto.email,
-			password: await hash(dto.password, salt),
-		})
-
-		const tokens = await this.issueTokenPair(String(newUser._id))
-
+		const tokens = await this.issueTokenPair(String(user._id))
 		return {
-			user: this.returnUserFields(newUser),
+			user: this.returnUserFields(user),
 			...tokens,
 		}
+	}
+
+	async register({ name, email, password, project }: UpdateUserDto) {
+		const salt = await genSalt(10)
+		const newUser = new this.UserModel({
+			name,
+			email,
+			password: await hash(password, salt),
+			project,
+		})
+		const user = await newUser.save()
+
+		const tokens = await this.issueTokenPair(String(user._id))
+
+		return {
+			user: this.returnUserFields(user),
+			...tokens,
+		}
+	}
+
+	async findByEmail(email: string) {
+		return this.UserModel.findOne({ email }).exec()
 	}
 
 	async validateUser(dto: AuthDto): Promise<UserModel> {
@@ -96,8 +97,10 @@ export class AuthService {
 	returnUserFields(user: UserModel) {
 		return {
 			_id: user._id,
+			name: user.name,
 			email: user.email,
 			isAdmin: user.isAdmin,
+			project: user.project
 		}
 	}
 }

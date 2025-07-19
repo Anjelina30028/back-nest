@@ -6,3 +6,5 @@ export const getMongoDbConfig = async (
 ):Promise<TypegooseModuleOptions> => ({
     uri: configService.get('MONGO_URI')
 })
+
+

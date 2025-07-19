@@ -1,7 +1,8 @@
-import {IsEmail, IsString, MinLength} from 'class-validator';
+import {IsArray, IsEmail, IsString, MinLength} from 'class-validator';
 
 
 export class AuthDto {
+    
     @IsEmail()
     email: string
 
@@ -10,4 +11,5 @@ export class AuthDto {
     })
     @IsString()
     password: string
+
 }

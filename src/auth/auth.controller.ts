@@ -2,6 +2,8 @@ import { Body, Controller, HttpCode, Post, UsePipes, ValidationPipe } from '@nes
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { refreshTokenDto } from './dto/refreshToken';
+import { UpdateUserDto } from 'src/user/dto/update-user.dto'
+
 
 @Controller('auth')
 export class AuthController {
@@ -25,7 +27,7 @@ export class AuthController {
     @UsePipes(new ValidationPipe()) 
     @HttpCode(200)
     @Post('register')
-    async register(@Body() dto:AuthDto) {
+    async register(@Body() dto:UpdateUserDto) {
         return this.AuthService.register(dto)
     }
 
